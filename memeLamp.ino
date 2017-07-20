@@ -24,43 +24,34 @@ void setup()
 {
   disp.Init();
   disp.LoadMsg(1, "Hello World!");
-
   network.Init(ssid, pwd, memeCounterHost);
-  delay(1000);
-  String response = GetRespons();
-  disp.LoadMsg(2, response);
+  network.ConnectToServer();
 }
 
 void loop()
 {
   disp.Refresh();
   disp.ScrollMatrix();
-  //CheckNetwork();
+  CheckNetwork();
 }
 
 void CheckNetwork() {
-  static uint32_t lastCountTime = millis();
-  if (millis() - lastCountTime > 1500) {
-    lastCountTime = millis();
-    RunCheckNetwork();
-  }  
-}
-
-void RunCheckNetwork() {
-  if(network.NotConnected()) {
-    network.RestartConnection();
-  }
-  if(network.HasResponse()) {
-    String response = network.GetResponse();
+  if(!network.HasResponse()) 
+    return;
+  if(network.GetResponsePartial()) {
+    String response = network.readBuffer;
     disp.LoadMsg(2, response);
   }
 }
 
-String GetRespons() { 
-  long _startMillis = millis();
-  network.ConnectToServer();
-  while (network.NotConnected() and (millis()-_startMillis < 4000))
-  {}
-  return network.GetResponse();  
+void CheckNetwork1() {
+  if(!network.HasResponse()) 
+    return;
+  if(network.NotConnected()) {
+    network.RestartConnection();
+  }
+  String response = network.GetResponse();
+  disp.LoadMsg(2, response);
 }
+
 
