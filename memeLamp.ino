@@ -1,99 +1,93 @@
-#include "WiFiEsp.h"
-#include "LEDMatrix.h"
-#include <ArduinoJson.h>
-#include <StandardCplusplus.h>
-#include <vector>
+#include "LEDMatrix64.h"
 
-#include "LedMatrixFont.h"
-
-//// Emulate Serial1 on pins 7/6 if not present
-//#ifndef HAVE_HWSERIAL1
-//#include "SoftwareSerial.h"
-//SoftwareSerial Serial1(6, 7); // RX, TX
-//#endif
-
-//const char* ssid = "The LANnisters 2.4";
-//const char* pwd = "huskyvalley292";
-const char ssid[] = "Ben's iPhone";
-const char pwd[] = "reallylongpassword";
-
-#include "LEDMatrix.h"
-#include "LedMatrixFont.h"
-
+#define PREWIDTH  8
 #define WIDTH   64
-#define HEIGHT  16
+#define HEIGHT  32
 
-const byte oe = A0;
-const byte r1 = A1;
+#define RowA_Pin 2
+#define RowB_Pin 3
+#define RowC_Pin 4
+#define RowD_Pin 5
+#define OE_Pin 6
+#define Red_Pin 7
+#define Green_Pin 8
+#define CLK_Pin 9
+#define STB_Pin 10
 
-const byte a = 11;
-const byte b = 10;
-const byte c = 9;
-const byte d = 8;
+// LEDMatrix(a, b, c, d, oe, r1, stb, clk);
+LEDMatrix64 matrix(RowA_Pin, RowB_Pin, RowC_Pin, RowD_Pin, OE_Pin, Red_Pin, Green_Pin, STB_Pin, CLK_Pin);
 
-const byte stb = A2; //le
-const byte clk = A3;
-
-LEDMatrix matrix(a, b, c, d, oe, r1, stb, clk);
-
-// Display Buffer 128 = 64 * 16 / 8
-uint8_t displaybuf[WIDTH * HEIGHT / 8] = {};
+// 16 * 8 digital font
+const uint8_t digitals[] = {
+    0x00, 0x1C, 0x36, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x63, 0x36, 0x1C, 0x00, 0x00, 0x00, 0x00, // 0
+    0x00, 0x18, 0x78, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x7E, 0x00, 0x00, 0x00, 0x00, // 1
+    0x00, 0x3E, 0x63, 0x63, 0x63, 0x06, 0x06, 0x0C, 0x18, 0x30, 0x63, 0x7F, 0x00, 0x00, 0x00, 0x00, // 2
+    0x00, 0x3E, 0x63, 0x63, 0x06, 0x1C, 0x06, 0x03, 0x03, 0x63, 0x66, 0x3C, 0x00, 0x00, 0x00, 0x00, // 3
+    0x00, 0x06, 0x0E, 0x1E, 0x36, 0x36, 0x66, 0x66, 0x7F, 0x06, 0x06, 0x1F, 0x00, 0x00, 0x00, 0x00, // 4
+    0x00, 0x7F, 0x60, 0x60, 0x60, 0x7C, 0x76, 0x03, 0x03, 0x63, 0x66, 0x3C, 0x00, 0x00, 0x00, 0x00, // 5
+    0x00, 0x1E, 0x36, 0x60, 0x60, 0x7C, 0x76, 0x63, 0x63, 0x63, 0x36, 0x1C, 0x00, 0x00, 0x00, 0x00, // 6
+    0x00, 0x7F, 0x66, 0x66, 0x0C, 0x0C, 0x18, 0x18, 0x18, 0x18, 0x18, 0x18, 0x00, 0x00, 0x00, 0x00, // 7
+    0x00, 0x3E, 0x63, 0x63, 0x63, 0x36, 0x1C, 0x36, 0x63, 0x63, 0x63, 0x3E, 0x00, 0x00, 0x00, 0x00, // 8
+    0x00, 0x1C, 0x36, 0x63, 0x63, 0x63, 0x37, 0x1F, 0x03, 0x03, 0x36, 0x3C, 0x00, 0x00, 0x00, 0x00, // 9
+};
 
 void setup()
 {
-  matrix.begin(displaybuf, WIDTH, HEIGHT);
-
-  Serial.begin(115200);
-  Serial1.begin(115200);
-  // while (!Serial) {}
-  WiFi.init(&Serial1);
-
-  WiFi.begin(ssid, pwd);
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    Serial.print(F("Could not connect to access point, with SSID and password"));
-  }
-
-  IPAddress ip = WiFi.localIP();
-  Serial.print(F("IP Address: "));
-  Serial.println(ip);
-  //WiFi.ping("butter-goal.glitch.me");
+  matrix.begin();
+  matrix.clear();
 }
-
-char* lastDank = "         ";
 
 void loop()
 {
-  WiFiEspClient client;
-  client.connect("butter-goal.glitch.me", 80);
-  client.println(F("GET / HTTP/1.1"));
-  client.println(F("Host: butter-goal.glitch.me"));
-  client.println();
-
-  JsonObject& root = ReadClient(client);
-
-  const char* dank = root["dank"];
-
-  client.stop();
-
-  Serial.print("last: ");Serial.print(lastDank);
-  Serial.print(", curr: ");Serial.print(dank);
-  Serial.println();
-
-  if(strcmp(dank, lastDank) == 0) {
-    return;    
-  }
-
-  // Copy new value into old string
-  snprintf(lastDank, strlen(dank)+1, "%s", dank);
-  
-  //Draw on led screen
-  uint32_t lastCountTime = millis();
-  while ((millis() - lastCountTime) < 2000) {
-    DrawSentence(dank);
-    ShowMatrix(30);
-  }
-  delay(50);
+  matrix.scan();
+  AddNumberToPreBuffer();
+  ScrollMatrix();
 }
 
+// Adds a number to the prebuffer, which is off screen
+void AddNumberToPreBuffer() {
+  static uint32_t lastCountTime = 0;
 
+  // Run every 900 milliseconds
+  if ((millis() - lastCountTime) > 900) {
+    lastCountTime = millis();
+    drawDigitalPre(0, 0, getCount());
+    drawDigitalPre(0, 10, getCount());
+    drawDigitalPre(0, 20, getCount());
+  }
+}
+
+// Get the counter for the numbers
+int getCount() {
+  static uint8_t count = 0;
+  if(count > 9)
+    count = 0;
+  return count++;
+}
+
+// Scroll the matrix accross the screen and pull in from the prebuffer
+void ScrollMatrix() {
+  static uint32_t lastCountTime = 0;
+  
+  // Run every 100 milliseconds
+  if ((millis() - lastCountTime) > 100) {
+    lastCountTime = millis();
+    matrix.shiftMatrix();
+  }
+}
+
+// Draw in the buffer off screen
+void drawDigitalPre(uint16_t x, uint16_t y, uint8_t n)
+{
+  if (n > 10) {
+    return;
+  }
+
+  uint8_t *pDst = matrix.prebuf + y * (PREWIDTH / 8) + x / 8;
+  const uint8_t *pSrc = digitals + n * 16;
+  for (uint8_t i = 0; i < 16; i++) {
+    *pDst = *pSrc;
+    pDst += PREWIDTH / 8;
+    pSrc++;
+  }
+}
