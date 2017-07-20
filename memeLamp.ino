@@ -7,10 +7,9 @@
   -Queuer (Part of LEDMatrix64)
 */
 
-#include "Display.h"
 #include "Network.h"
+#include <Wire.h>
 
-Display disp;
 Network network;
 
 //char const* ssid = "Ben's iPhone";
@@ -22,27 +21,46 @@ String memeCounterHost = "butter-goal.glitch.me";
 
 void setup()
 {
-  disp.Init();
-  disp.LoadMsg(1, "Hello World!");
   network.Init(ssid, pwd, memeCounterHost);
   network.ConnectToServer();
+  Serial.begin(115200);
+  Serial.println();
+  
+  const int sclPin = D1;
+  const int sdaPin = D2;
+  
+  Wire.begin(sdaPin, sclPin);
+  
+  Wire.beginTransmission(8); // transmit to device #8
+  Wire.write("lastResponse");        // sends five bytes
+  Wire.endTransmission();    // stop transmitting
 }
 
 void loop()
 {
-  disp.Refresh();
-  disp.ScrollMatrix();
   CheckNetwork();
 }
 
 void CheckNetwork() {
-  if(!network.HasResponse()) 
-    return;
   if(network.NotConnected()) {
     network.RestartConnection();
   }
+  if(!network.HasResponse()) 
+    return;
   String response = network.GetResponse();
-  disp.LoadMsg(2, response);
-}
+  static String lastResponse = "";
+  if(response.equals(lastResponse))
+    return;
+  lastResponse = String("" + response);
+  Serial.println(response);
 
+  int str_len = lastResponse.length() + 1; 
+  char char_array[str_len];
+  lastResponse.toCharArray(char_array, str_len);
+  Serial.println(char_array);
+
+  Wire.beginTransmission(8); // transmit to device #8
+  Wire.write(char_array);        // sends five bytes
+  Wire.endTransmission();    // stop transmitting
+}
 

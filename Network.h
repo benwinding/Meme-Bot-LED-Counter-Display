@@ -2,10 +2,8 @@
 #define _NETWORK_H_
 
 // NETWORK definitions
-#include "WiFiEsp.h"
 #include "Arduino.h"
-#include <ArduinoJson.h>
-#include <StandardCplusplus.h>
+#include <ESP8266WiFi.h>
 #include <vector>
 
 class Network {
@@ -17,8 +15,10 @@ public:
   bool NotConnected();
   bool HasResponse();
   String GetResponse();
+  bool GetResponsePartial();
 
-  WiFiEspClient client;
+  WiFiClient client;
+  String readBuffer;
 
 private:
   const char* ssid;

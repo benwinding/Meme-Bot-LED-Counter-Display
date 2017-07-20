@@ -7,19 +7,7 @@ void Network::Init(const char* ssid, const char* pwd, String memeCounterHost) {
   this->pwd = pwd;
   this->memeCounterHost = memeCounterHost;
 
-  Serial.begin(115200);
-  while (!Serial) {} // Needed for Leornado 
-  Serial1.begin(115200);
-  WiFi.init(&Serial1);
   WiFi.begin((char*) ssid, pwd);
-
-  if (WiFi.status() != WL_CONNECTED) {
-    Serial.print(F("Could not connect to access point, with SSID and password"));
-  }
-  
-  IPAddress ip = WiFi.localIP();
-  Serial.print(F("IP Address: "));
-  Serial.println(ip);
 }
 
 void Network::ConnectToServer() {
@@ -70,9 +58,7 @@ bool Network::IsHeaderEnd(std::vector<int> last) {
     last[3] == 10;
 }
 
-String Network::GetResponse() {
-  String readBuffer;
-  
+String Network::GetResponse() {  
   char c;
   std::vector<int> last = {0,0,0,0};
   while((c = client.read()) > 0 ){
@@ -83,6 +69,7 @@ String Network::GetResponse() {
       break;
     }
   }
-  Serial.println(readBuffer);
+  client.stop();
   return readBuffer;
 }
+
