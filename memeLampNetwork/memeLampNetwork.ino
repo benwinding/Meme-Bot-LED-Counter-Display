@@ -1,14 +1,14 @@
 /*
   Library Dependencies:
-  -WiFiEsp
   -ArduinoJson
+  -WiFiEsp
   -StandardCplusplus (Arduino)
-  -LEDMatrix64
   -Queuer (Part of LEDMatrix64)
 */
 
 #include "Network.h"
 #include <Wire.h>
+#include <ArduinoJson.h>
 
 Network network;
 
@@ -19,8 +19,7 @@ const char* pwd = "huskyvalley292";
 
 String memeCounterHost = "butter-goal.glitch.me";
 
-void setup()
-{
+void setup() {
   network.Init(ssid, pwd, memeCounterHost);
   network.ConnectToServer();
   Serial.begin(115200);
@@ -30,14 +29,9 @@ void setup()
   const int sdaPin = D2;
   
   Wire.begin(sdaPin, sclPin);
-  
-  Wire.beginTransmission(8); // transmit to device #8
-  Wire.write("lastResponse");        // sends five bytes
-  Wire.endTransmission();    // stop transmitting
 }
 
-void loop()
-{
+void loop() {
   CheckNetwork();
 }
 
@@ -48,19 +42,56 @@ void CheckNetwork() {
   if(!network.HasResponse()) 
     return;
   String response = network.GetResponse();
-  static String lastResponse = "";
+  static String lastResponse = "{\"Request\":\"Count\",\"meme\":\"2405\",\"dank\":\"2147\",\"hot\":\"1161\",\"random\":\"331\",\"xxx\":\"1304\",\"welcome\":\"127\",\"find\":\"53\",\"help\":\"42\",\"how\":\"2\",\"why\":\"12\",\"share\":\"3\"}";
   if(response.equals(lastResponse))
     return;
+  String changedJson = GetChange(lastResponse, response);
+
   lastResponse = String("" + response);
-  Serial.println(response);
 
-  int str_len = lastResponse.length() + 1; 
-  char char_array[str_len];
-  lastResponse.toCharArray(char_array, str_len);
-  Serial.println(char_array);
-
-  Wire.beginTransmission(8); // transmit to device #8
-  Wire.write(char_array);        // sends five bytes
-  Wire.endTransmission();    // stop transmitting
+  Serial.println(changedJson);
+  SendWire(changedJson);
 }
+
+String GetChange(String previous, String current) {
+  StaticJsonBuffer<400> jsonBufferP;
+  StaticJsonBuffer<400> jsonBufferC;
+  JsonObject& rootP = jsonBufferP.parseObject(previous);
+  JsonObject& rootC = jsonBufferC.parseObject(current);
+
+//  Serial.print("Prev: ");
+//  Serial.println(previous);
+//  Serial.print("Curr: ");
+//  Serial.println(current);
+
+  for(JsonObject::iterator it=rootP.begin(); it!=rootP.end(); ++it) 
+  {
+    const char* key = it->key;
+    String keyStr(key);
+    String valueP = rootP[keyStr];
+    String valueC = rootC[keyStr];
+    if(!valueP.equals(valueC)) {
+      StaticJsonBuffer<100> jsonBuffer2;
+      JsonObject& root2 = jsonBuffer2.createObject();
+      root2[key] = valueC;
+      String buf = "";
+      root2.printTo(buf);
+      return buf;
+    }
+  }
+  return "NOT FOUND";
+}
+
+void SendWire(String response) {
+  int str_len = response.length() + 1; 
+  char char_array[str_len];
+  response.toCharArray(char_array, str_len);
+
+  for(int i=0; i<str_len; i++) {
+    Wire.beginTransmission(8); // transmit to device #8
+    Wire.write(char_array[i]);
+    Wire.endTransmission();    // stop transmitting
+  }
+}
+
 

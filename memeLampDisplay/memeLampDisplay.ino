@@ -1,6 +1,5 @@
 /*
   Library Dependencies:
-  -WiFiEsp
   -ArduinoJson
   -StandardCplusplus (Arduino)
   -LEDMatrix64
@@ -9,20 +8,22 @@
 
 #include "Display.h"
 #include <Wire.h>
+#include <ArduinoJson.h>
 
 Display disp;
 
-  const int sclPin = 3;
-  const int sdaPin = 2;
 
 void setup()
 {
   disp.Init();
-  disp.LoadMsg(1, "Hello World!");
+  disp.LoadMsg(1, "$$$  Meme Bot  $$$");
+  disp.LoadMsg(2, "+++ LIVE COUNT +++");
+  disp.LoadMsg(3, "==================");
+  disp.LoadMsg(4, "    Version 5.1  ");
   Serial.begin(115200);
-  while(!Serial){}
+  // while(!Serial){}
 
-//  Wire.begin(sdaPin, sclPin);
+  //ProcessJson("{\"dank\":\"420\"}");
 
   Wire.begin(8);
   Wire.onReceive(ReceiveWire); // register event
@@ -35,12 +36,45 @@ void loop()
   CheckInput();
 }
 
+// { = 123
+// } = 125
+
 void ReceiveWire() {
-  while (0 < Wire.available()) { // loop through all but the last
-    char c = Wire.read(); // receive byte as a character
-    Serial.print(c);         // print the character
-    String letter = String(c);
-    disp.LoadMsg(3,letter);
+  static String jsonString = "";
+  bool isJsonStart, isJsonEnd;
+  while (0 < Wire.available()) {
+    char c = Wire.read();
+    if(c == '{') {
+      jsonString = "";      
+    }
+    jsonString = String(jsonString + c);
+    if(c == '}') {
+      isJsonEnd = true;
+      ProcessJson(jsonString);
+      break;
+    }
+  }
+}
+
+const char* rowLookup = "{\"meme\":\"1\",\"dank\":\"2\",\"hot\":\"3\",\"random\":\"4\",\"xxx\":\"3\",\"welcome\":\"4\",\"find\":\"4\",\"help\":\"4\",\"how\":\"4\",\"why\":\"4\",\"share\":\"4\"}";
+
+void ProcessJson(String jsonString) {
+  StaticJsonBuffer<200> jsonMainBuffer;
+  JsonObject& rootLookup = jsonMainBuffer.parseObject(rowLookup);
+
+  Serial.println(jsonString);
+  StaticJsonBuffer<200> jsonBuffer1;
+  JsonObject& rootR = jsonBuffer1.parseObject(jsonString);
+
+  for(JsonObject::iterator it=rootR.begin(); it!=rootR.end(); ++it) 
+  {
+    const char* key = it->key;
+    String keyStr(key);
+    int row = rootLookup[keyStr];
+    String countVal = rootR[keyStr];
+    disp.LoadMsg(row,keyStr);
+    disp.LoadMsg(row,":");
+    disp.LoadMsg(row,countVal);
   }
 }
 

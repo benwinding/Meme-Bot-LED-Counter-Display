@@ -17,10 +17,10 @@ void Network::ConnectToServer() {
 
   client.connect(char_array, 80);  
 
-  String memeType = "dank";
+///  String memeType = "dank";
   String request = "GET ";
-  request.concat("/value/");
-  request.concat(memeType);
+//  r/equest.concat("/value/");
+///  request.concat(memeType);
   request.concat("/ HTTP/1.1");
   client.println(request);
 
