@@ -22,13 +22,14 @@ void Network::Init(const char* ssid, const char* pwd, String memeCounterHost) {
   Serial.println(ip);
 }
 
-void Network::ConnectToClient(String memeType) {
+void Network::ConnectToServer() {
   int str_len = memeCounterHost.length() + 1; 
   char char_array[str_len];
   memeCounterHost.toCharArray(char_array, str_len);
 
   client.connect(char_array, 80);  
 
+  String memeType = "dank";
   String request = "GET ";
   request.concat("/value/");
   request.concat(memeType);
@@ -42,21 +43,34 @@ void Network::ConnectToClient(String memeType) {
   client.println();
 }
 
-String Network::GetMemeCount(String memeType) {
-  ConnectToClient(memeType);
- 
-  String str = ReadClient(client);
+void Network::RestartConnection() {
   client.stop();
-
-  return str;
+  ConnectToServer();
 }
 
-String Network::ReadClient(WiFiEspClient client)
-{
-  long _startMillis = millis();
-  while (!client.available() and (millis()-_startMillis < 4000))
-  {}
+bool Network::NotConnected() {
+  return !client.connected();
+}
 
+bool Network::HasResponse() {
+  return client.available();
+}
+
+bool Network::NotTimedOut() {
+  static long _startMillis = millis();
+  return millis()-_startMillis < TIMEOUT;
+}
+
+bool Network::IsHeaderEnd(std::vector<int> last) {
+  // [13][10][13][10] <- end of header characters
+  return 
+    last[0] == 13 && 
+    last[1] == 10 && 
+    last[2] == 13 && 
+    last[3] == 10;
+}
+
+String Network::GetResponse() {
   String readBuffer;
   
   char c;
@@ -64,13 +78,13 @@ String Network::ReadClient(WiFiEspClient client)
   while((c = client.read()) > 0 ){
     last.erase(last.begin());
     last.push_back(c);
-    if (last[0] == 13 && last[1] == 10 && last[2] == 13 && last[3] == 10) {
-      // [13][10][13][10] <- end of header characters
+    //if (IsHeaderEnd(last)) {
       readBuffer = client.readString();
       break;
-    }
+    //}
   }
+  Serial.println();
+  Serial.print("Response: ");
   Serial.println(readBuffer);
   return readBuffer;
 }
-

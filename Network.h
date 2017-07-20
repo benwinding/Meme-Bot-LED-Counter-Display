@@ -12,16 +12,22 @@ class Network {
 public:
   Network();
   void Init(const char* ssid, const char* pwd, String memeCounterHost);
-  String GetMemeCount(String memeType);
+  void ConnectToServer();
+  void RestartConnection();
+  bool NotConnected();
+  bool HasResponse();
+  String GetResponse();
 
 private:
-  WiFiEspClient client;
-
-  void ConnectToClient(String memeType);
-  String ReadClient(WiFiEspClient client);
   const char* ssid;
   const char* pwd;
   String memeCounterHost;
+
+  bool IsHeaderEnd(std::vector<int> last);
+
+  WiFiEspClient client;
+  int TIMEOUT;
+  bool NotTimedOut();
 };
 
 #endif
