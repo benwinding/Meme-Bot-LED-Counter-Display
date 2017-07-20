@@ -7,60 +7,48 @@
   -Queuer (Part of LEDMatrix64)
 */
 
-#include "Network.h"
+#include "Display.h"
 #include <Wire.h>
 
-Network network;
+Display disp;
 
-//char const* ssid = "Ben's iPhone";
-//char const* pwd = "reallylongpassword";
-const char* ssid = "The LANnisters 2.4";
-const char* pwd = "huskyvalley292";
-
-String memeCounterHost = "butter-goal.glitch.me";
+  const int sclPin = 3;
+  const int sdaPin = 2;
 
 void setup()
 {
-  network.Init(ssid, pwd, memeCounterHost);
-  network.ConnectToServer();
+  disp.Init();
+  disp.LoadMsg(1, "Hello World!");
   Serial.begin(115200);
-  Serial.println();
-  
-  const int sclPin = D1;
-  const int sdaPin = D2;
-  
-  Wire.begin(sdaPin, sclPin);
-  
-  Wire.beginTransmission(8); // transmit to device #8
-  Wire.write("lastResponse");        // sends five bytes
-  Wire.endTransmission();    // stop transmitting
+  while(!Serial){}
+
+//  Wire.begin(sdaPin, sclPin);
+
+  Wire.begin(8);
+  Wire.onReceive(ReceiveWire); // register event
 }
 
 void loop()
 {
-  CheckNetwork();
+  disp.Refresh();
+  disp.ScrollMatrix();
+  CheckInput();
 }
 
-void CheckNetwork() {
-  if(network.NotConnected()) {
-    network.RestartConnection();
+void ReceiveWire() {
+  while (0 < Wire.available()) { // loop through all but the last
+    char c = Wire.read(); // receive byte as a character
+    Serial.print(c);         // print the character
+    String letter = String(c);
+    disp.LoadMsg(3,letter);
   }
-  if(!network.HasResponse()) 
-    return;
-  String response = network.GetResponse();
-  static String lastResponse = "";
-  if(response.equals(lastResponse))
-    return;
-  lastResponse = String("" + response);
-  Serial.println(response);
+}
 
-  int str_len = lastResponse.length() + 1; 
-  char char_array[str_len];
-  lastResponse.toCharArray(char_array, str_len);
-  Serial.println(char_array);
-
-  Wire.beginTransmission(8); // transmit to device #8
-  Wire.write(char_array);        // sends five bytes
-  Wire.endTransmission();    // stop transmitting
+void CheckInput() {
+  if(Serial.available() <= 0) 
+    return;
+  char c = Serial.read();
+  String letter = String(c);
+  disp.LoadMsg(4,letter);
 }
 
