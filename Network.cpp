@@ -70,11 +70,12 @@ bool Network::IsHeaderEnd(std::vector<int> last) {
     last[3] == 10;
 }
 
-String Network::GetResponse() {  
+String Network::GetResponse() {
+  String readBuffer;
+  
   char c;
   std::vector<int> last = {0,0,0,0};
   while((c = client.read()) > 0 ){
-    Serial.print(c);
     last.erase(last.begin());
     last.push_back(c);
     if (IsHeaderEnd(last)) {
@@ -84,21 +85,4 @@ String Network::GetResponse() {
   }
   Serial.println(readBuffer);
   return readBuffer;
-}
-
-bool Network::GetResponsePartial() {  
-  readBuffer = client.readString();
-  Serial.println(readBuffer);
-  return true;
-  char c;
-  if((c = client.read()) == 0 )
-    return true;
-  Serial.print(c);
-  last.erase(last.begin());
-  last.push_back(c);
-  if(!IsHeaderEnd(last))
-    return false;
-  readBuffer = client.readString();
-  Serial.println(readBuffer);
-  return true;
 }

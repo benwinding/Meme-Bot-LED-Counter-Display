@@ -38,15 +38,6 @@ void loop()
 void CheckNetwork() {
   if(!network.HasResponse()) 
     return;
-  if(network.GetResponsePartial()) {
-    String response = network.readBuffer;
-    disp.LoadMsg(2, response);
-  }
-}
-
-void CheckNetwork1() {
-  if(!network.HasResponse()) 
-    return;
   if(network.NotConnected()) {
     network.RestartConnection();
   }
