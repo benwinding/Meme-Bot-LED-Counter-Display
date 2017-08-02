@@ -26,6 +26,10 @@ After a lot of trial and error I realised there would be 3 main parts to the sys
  
 I tried to use one arduino module, but the network requests were taking to long to allow the display to update. This lead me to decouple the code into 2 modules. The network module would request and process the statistical data, then send it to the LED over a serial connection using the Wire library.
 
+But I did need to alter a library in order to use the LED display I had, so I published my changes here:
+
+[https://github.com/benwinding/LEDMatrix64-Arduino](https://github.com/benwinding/LEDMatrix64-Arduino)
+
 ![asss](http://i.imgur.com/yQ1Hfht.jpg)
 ![asss](http://i.imgur.com/LY8I7mK.jpg)
 ![asss](http://i.imgur.com/1fhEh9v.jpg)
