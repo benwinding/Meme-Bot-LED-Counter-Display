@@ -1,4 +1,4 @@
-##### Background
+## Some Background
 Well I made this thing called [Meme Bot](https://www.facebook.com/1memebot/), it's a messenger chat-bot that has the following features:
 
   - [x] Send and recieve messages through the facebook messenger app
@@ -12,6 +12,8 @@ Well I thought it would be cool to see the statistics of which meme categories w
 
 \<buzzword> REALTIME \</buzzword>
 
+![asss](http://i.imgur.com/u8YkXQt.gif)
+
 ## Project Overview
 After a lot of trial and error I realised there would be 3 main parts to the system:
 
@@ -23,3 +25,8 @@ After a lot of trial and error I realised there would be 3 main parts to the sys
  - LED Display Module, an arduino board to display the information
  
 I tried to use one arduino module, but the network requests were taking to long to allow the display to update. This lead me to decouple the code into 2 modules. The network module would request and process the statistical data, then send it to the LED over a serial connection using the Wire library.
+
+![asss](http://i.imgur.com/yQ1Hfht.jpg)
+![asss](http://i.imgur.com/LY8I7mK.jpg)
+![asss](http://i.imgur.com/1fhEh9v.jpg)
+![asss](http://i.imgur.com/6BAEv6e.jpg)
