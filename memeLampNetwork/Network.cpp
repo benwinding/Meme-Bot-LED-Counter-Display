@@ -10,6 +10,10 @@ void Network::Init(const char* ssid, const char* pwd, String memeCounterHost) {
   WiFi.begin((char*) ssid, pwd);
 }
 
+bool Network::WifiConnected() {
+  return WiFi.waitForConnectResult() == WL_CONNECTED;
+}
+
 void Network::ConnectToServer() {
   int str_len = memeCounterHost.length() + 1; 
   char char_array[str_len];

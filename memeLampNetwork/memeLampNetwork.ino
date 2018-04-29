@@ -12,18 +12,35 @@
 
 Network network;
 
-//char const* ssid = "Ben's iPhone";
-//char const* pwd = "reallylongpassword";
 const char* ssid = "The LANnisters 2.4";
 const char* pwd = "huskyvalley292";
+char const* ssidBackup = "Ben's iPhone";
+char const* pwdBackup = "reallylongpassword";
 
 String memeCounterHost = "butter-goal.glitch.me";
 
-void setup() {
+void TryConnectPrimary() {
   network.Init(ssid, pwd, memeCounterHost);
-  network.ConnectToServer();
+}
+
+void TryConnectBackup() {
+  network.Init(ssidBackup, pwdBackup, memeCounterHost);      
+}
+
+void setup() {
   Serial.begin(115200);
   Serial.println();
+
+  Serial.println(F("Connecting to Wifi AP"));
+  
+  TryConnectPrimary();
+  while(!network.WifiConnected()) {
+    TryConnectBackup();
+    if(network.WifiConnected())
+      break;
+    TryConnectPrimary();
+  }
+  network.ConnectToServer();
   
   const int sclPin = D1;
   const int sdaPin = D2;

@@ -10,6 +10,7 @@ class Network {
 public:
   Network();
   void Init(const char* ssid, const char* pwd, String memeCounterHost);
+  bool WifiConnected();
   void ConnectToServer();
   void RestartConnection();
   bool NotConnected();
